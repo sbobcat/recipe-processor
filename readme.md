@@ -8,7 +8,7 @@ The drive for this project was that my father-in-law had gotten his mother's old
 
 Example of the pages that I scanned:
 
-- ![Cover page image](../../assets/page-001.png)
+- ![Cover page image](./assets/page-001.png)
 - ![Recipe page image](../../assets/page-010.png)
 - ![Recipe page image](../../assets/page-012.png)
  
