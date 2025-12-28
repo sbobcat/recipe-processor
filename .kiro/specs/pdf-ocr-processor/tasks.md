@@ -99,6 +99,7 @@ This implementation plan converts the PDF OCR processor design into discrete cod
 
 - [ ] 4.2 MVP Checkpoint - Create initial documentation
   - Create comprehensive README with setup and usage instructions
+  - Create a requirements file, 1 for the use of local (kraken), and 1 for AWS
   - Document configuration options and troubleshooting guide
   - Document both local (Kraken) and AWS (Textract) processing workflows
   - Include examples of running each component
