@@ -1,6 +1,6 @@
 # PDF OCR Processor
 
-**Version 1.0.0** | [Changelog](CHANGELOG.md) | [Releases](../../releases)
+**Version 1.1.0** | [Changelog](CHANGELOG.md) | [Releases](../../releases)
 
 A document processing system that combines individual scanned PDF files and extracts text using either local (Kraken OCR) or cloud-based (AWS Textract) OCR engines. The system generates human-reviewable documents that display original images alongside extracted text for validation and correction.
 

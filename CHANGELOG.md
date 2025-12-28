@@ -14,6 +14,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Property-based testing suite
 - Integration tests for complete workflows
 
+## [1.1.0] - 2024-12-28
+
+### Enhanced
+- **PDF Combiner Robustness**
+  - Comprehensive input validation for folder paths and file names
+  - Enhanced PSWritePDF module dependency checking with installation guidance
+  - PDF file corruption detection before processing
+  - Disk space validation with buffer calculation
+  - Output location write permission verification
+  - Existing file overwrite confirmation
+  - Output file integrity verification after creation
+
+### Improved
+- **Error Handling and User Experience**
+  - Clear, actionable error messages with troubleshooting suggestions
+  - Enhanced progress reporting with file sizes and detailed status
+  - Better validation feedback with checkmarks and error indicators
+  - Dry-run mode improvements with estimated output size calculation
+  - Comprehensive pre-processing validation checks
+
+### Technical Improvements
+- **Validation Functions**
+  - `Test-InputValidation`: Validates parameters, paths, and file names
+  - `Test-PSWritePDFModule`: Checks module availability and functionality
+  - `Test-PDFIntegrity`: Detects corrupted or invalid PDF files
+  - `Test-DiskSpace`: Ensures sufficient space before processing
+  - Enhanced error reporting with specific failure reasons
+
+### Requirements Addressed
+- Requirements 1.1, 1.2, 1.3, 1.4: Enhanced PDF combination with validation
+- Requirements 5.3, 5.5: Improved error handling and system stability
+
 ## [1.0.0] - 2024-12-28
 
 ### Added
