@@ -8,9 +8,9 @@ The drive for this project was that my father-in-law had gotten his mother's old
 
 Example of the pages that I scanned:
 
-- ![Cover page image](.\assets\page-001.png)
-- ![Recipe page image](.\assets\page-010.png)
-- ![Recipe page image](.\assets\page-12.png)
+- ![Cover page image](../../assets/page-001.png)
+- ![Recipe page image](../../assets/page-010.png)
+- ![Recipe page image](../../assets/page-012.png)
  
 For me creating the scanned files was fastest done by plugging a usb stick into my Canon printer/scanner and scanning the pages and writing to the usb stick. There I transfered the files to a folder to combine the images into a PDF. From there I wanted to play with different ways to OCR the text and have a way to easily compare the scan with the text from that scan.
 
