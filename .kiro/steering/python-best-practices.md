@@ -6,6 +6,9 @@ fileMatchPattern: '*.py'
 
 # Python Best Practices
 
+## General 
+- Use flake8 for checking code
+
 ## Code Style
 - Follow PEP 8 style guide
 - Use meaningful variable and function names
@@ -28,7 +31,7 @@ fileMatchPattern: '*.py'
 
 ## Code Organization
 - Use virtual environments for dependencies
-- Create requirements.txt or use poetry/pipenv
+- Create requirements.txt
 - Organize code into modules and packages
 - Use `__init__.py` files appropriately
 

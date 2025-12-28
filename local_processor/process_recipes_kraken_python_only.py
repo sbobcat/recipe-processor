@@ -197,8 +197,8 @@ class KrakenProcessorPythonOnly:
 def main():
     """Main processing function."""
     # Windows path converted to WSL path
-    wsl_pdf_path = "/mnt/c/Users/steph/OneDrive/Documents/Scanned Documents/annsrecipes/Anns_Complete_Recipe_Book.pdf"
-    wsl_output_dir = "/mnt/c/Users/steph/OneDrive/Documents/Scanned Documents/annsrecipes/kraken_output"
+    wsl_pdf_path = "/mnt/c/Code/pers/recipe-processor/test-data/Anns_Complete_Recipe_Book.pdf"
+    wsl_output_dir = "/mnt/c/Code/pers/recipe-processor/test-data/kraken_output"
     
     # Check if PDF exists
     if not Path(wsl_pdf_path).exists():

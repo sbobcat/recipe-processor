@@ -2,7 +2,7 @@
 # This script combines SCN_xxxx.pdf files in numerical order
 
 param(
-    [string]$InputFolder = "C:\Users\steph\OneDrive\Documents\Scanned Documents\annsrecipes",
+    [string]$InputFolder = "C:\Code\pers\recipe-processor\test-data",
     [string]$OutputFile = "Anns_Complete_Recipe_Book.pdf",
     [switch]$DryRun
 )

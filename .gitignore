@@ -26,6 +26,9 @@ override.tf.json
 #
 # !example_override.tf
 
+# Project-specific test data
+test-data/
+
 # Compiled source #
 ###################
 *.com

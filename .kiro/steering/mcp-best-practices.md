@@ -10,6 +10,8 @@ inclusion: always
 - Use user-level config (`~/.kiro/settings/mcp.json`) for global/cross-workspace servers
 - Workspace config takes precedence over user config for server name conflicts
 - Always specify exact versions or use `@latest` for stability
+- Always include the fetch server
+- Only include AWS related servers when AWS services are involved in a project.
 
 ## Installation and Setup
 - Use `uvx` command for Python-based MCP servers (requires `uv` package manager)
@@ -33,13 +35,46 @@ inclusion: always
 ```json
 {
   "mcpServers": {
-    "aws-docs": {
+    "fetch": {
       "command": "uvx",
-      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "args": [
+        "mcp-server-fetch@latest"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": []
+    },
+    "awslabs.aws-documentation-mcp-server": {
+      "command": "C:\\Users\\heveri\\AppData\\Roaming\\uv\\tools\\awslabs-aws-documentation-mcp-server\\Scripts\\awslabs.aws-documentation-mcp-server.exe",
+      "args": [],
       "env": {
         "FASTMCP_LOG_LEVEL": "ERROR"
       },
       "disabled": false,
+      "autoApprove": [
+        "search_documentation",
+        "read_documentation"
+      ]
+    },
+    "awslabs.aws-pricing-mcp-server": {
+      "command": "C:\\Users\\heveri\\AppData\\Roaming\\uv\\tools\\awslabs-aws-pricing-mcp-server\\Scripts\\awslabs.aws-pricing-mcp-server.exe",
+      "args": [],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "AWS_REGION": "us-east-1"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "get_pricing_service_codes"
+      ]
+    },
+    "awslabs.aws-diagram-mcp-server": {
+      "command": "C:\\Users\\heveri\\AppData\\Roaming\\uv\\tools\\awslabs-aws-diagram-mcp-server\\Scripts\\awslabs.aws-diagram-mcp-server.exe",
+      "args": [],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "disabled": true,
       "autoApprove": []
     },
     "filesystem": {
@@ -50,7 +85,44 @@ inclusion: always
       },
       "disabled": false,
       "autoApprove": ["read_file", "list_directory"]
-    }
+    },
+    "mcp-server-git": {
+      "command": "wsl",
+      "args": [
+        "-d",
+        "AmazonWSL",
+        "-e",
+        "bash",
+        "-c",
+        "source ~/.local/bin/env && uvx mcp-server-git"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "git_log",
+        "git_diff",
+        "git_show",
+        "git_status"
+      ]
+    },
+    "mcp-server-sqlite": {
+      "command": "wsl",
+      "args": [
+        "-d",
+        "AmazonWSL",
+        "-e",
+        "bash",
+        "-c",
+        "source ~/.local/bin/env && uvx mcp-server-sqlite"
+      ],
+      "env": {},
+      "disabled": true,
+      "autoApprove": [
+        "query",
+        "list_tables",
+        "describe_table"
+      ]
+    },
   }
 }
 ```
