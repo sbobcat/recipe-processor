@@ -4,6 +4,8 @@ title: Git Best Practices
 
 # Git Best Practices
 
+## Git configuration
+ 
 ## Commit Messages
 - Use conventional commit format: `type(scope): description`
 - Types: feat, fix, docs, style, refactor, test, chore
@@ -12,6 +14,8 @@ title: Git Best Practices
 - Include body for complex changes
 
 ## Branching
+- The global default branch name shold be setup to be `main`, `git config --global init.defaultbranch main`
+- New branches on remote should be created automatically, `git config set push.autosetupremote true`
 - Use feature branches for new development
 - Keep main branch stable and deployable
 - Use descriptive branch names (feature/user-auth, fix/login-bug)
