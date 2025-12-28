@@ -97,7 +97,7 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Ensure all tests pass, ask the user if questions arise.
   - _Requirements: System cleanup and preparation_
 
-- [ ] 4.2 MVP Checkpoint - Create initial documentation
+- [x] 4.2 MVP Checkpoint - Create initial documentation
   - Create comprehensive README with setup and usage instructions
   - Create a requirements file, 1 for the use of local (kraken), and 1 for AWS
   - Document configuration options and troubleshooting guide
