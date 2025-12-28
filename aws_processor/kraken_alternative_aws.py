@@ -149,7 +149,7 @@ class AWSTextractOCR:
 def main():
     """Main processing function."""
     # Configuration
-    pdf_path = Path(r"C:\Users\steph\OneDrive\Documents\Scanned Documents\annsrecipes\Anns_Complete_Recipe_Book.pdf")
+    pdf_path = Path(r"C:\Code\pers\recipe-processor\test-data\Anns_Complete_Recipe_Book.pdf")
     output_dir = Path(pdf_path.parent / "aws_textract_output")
     
     # Create output directory
