@@ -6,6 +6,18 @@ This implementation plan converts the PDF OCR processor design into discrete cod
 
 ## Tasks
 
+- [x] A. Validate existing code functionality and setup
+  - Test the PowerShell PDF combiner script with sample SCN_*.pdf files
+  - Verify PSWritePDF module is installed and working
+  - Test the local Kraken OCR processor with a sample combined PDF
+  - Verify Kraken installation and model availability in WSL
+  - Test the AWS OCR processor with proper AWS credentials
+  - Verify boto3 and AWS Textract access is working
+  - Test the side-by-side review generator with existing OCR output
+  - Verify python-docx and Word document generation works
+  - Document any setup issues or missing dependencies
+  - _Requirements: Baseline functionality validation_
+
 - [ ] 1. Enhance PDF Combiner with robust error handling and validation
   - Improve the PowerShell script with comprehensive input validation
   - Add better error messages for missing dependencies (PSWritePDF module)
@@ -62,8 +74,36 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Test confidence threshold configuration
   - _Requirements: 3.5, 5.1, 6.3_
 
-- [ ] 4. Checkpoint - Ensure all OCR processors work correctly
+- [x] 3.5 Create AWS OCR Review Generator
+  - Create AWSTextractSideBySideGenerator class similar to KrakenSideBySideGenerator
+  - Support AWS Textract output format with confidence scores
+  - Generate Word documents with original images and AWS OCR text
+  - Include confidence score highlighting for low-confidence words
+  - Handle AWS-specific metadata and processing statistics
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 8.1, 8.2, 8.3_
+
+- [ ]* 3.6 Write unit tests for AWS review generator
+  - Test document creation with AWS OCR results
+  - Test confidence score highlighting and formatting
+  - Test handling of missing images and failed pages
+  - _Requirements: 4.3, 4.4, 8.1, 8.2_
+
+- [ ] 4.1 Cleanup and prepare MVP environment
+  - Create cleanup script to remove test files and validation output
+  - List files to be cleaned up for user confirmation before removal
+  - Clean up validation_output directory contents
+  - Remove create_mock_results.py and test_*.py files
+  - Preserve test-data folder and its contents
   - Ensure all tests pass, ask the user if questions arise.
+  - _Requirements: System cleanup and preparation_
+
+- [ ] 4.2 MVP Checkpoint - Create initial documentation
+  - Create comprehensive README with setup and usage instructions
+  - Document configuration options and troubleshooting guide
+  - Document both local (Kraken) and AWS (Textract) processing workflows
+  - Include examples of running each component
+  - Document review document generation process
+  - _Requirements: MVP documentation and user guidance_
 
 - [ ] 5. Enhance Review Generator with comprehensive formatting
   - Improve KrakenSideBySideGenerator class error handling

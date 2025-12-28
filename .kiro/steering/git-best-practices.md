@@ -13,7 +13,7 @@ title: Git Best Practices
 
 ## Branching
 - Use feature branches for new development
-- Keep main/master branch stable and deployable
+- Keep main branch stable and deployable
 - Use descriptive branch names (feature/user-auth, fix/login-bug)
 - Delete merged branches to keep repository clean
 
