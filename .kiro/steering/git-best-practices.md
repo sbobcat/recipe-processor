@@ -21,6 +21,59 @@ title: Git Best Practices
 - Use descriptive branch names (feature/user-auth, fix/login-bug)
 - Delete merged branches to keep repository clean
 
+### Branch Naming Convention
+
+Use the format: `type/short-description`
+
+**Branch Types:**
+
+**Feature Development:**
+- `feature/user-authentication`
+- `feature/payment-integration`
+- `feature/search-functionality`
+
+**Bug Fixes:**
+- `fix/login-validation-error`
+- `fix/memory-leak-issue`
+- `fix/broken-navigation`
+
+**Documentation:**
+- `docs/api-documentation`
+- `docs/setup-guide`
+- `docs/troubleshooting`
+
+**Refactoring:**
+- `refactor/database-layer`
+- `refactor/component-structure`
+- `refactor/error-handling`
+
+**Testing:**
+- `test/unit-tests-auth`
+- `test/integration-tests`
+- `test/performance-testing`
+
+**Configuration/Infrastructure:**
+- `config/ci-pipeline`
+- `config/docker-setup`
+- `config/environment-variables`
+
+**Hotfixes (urgent production fixes):**
+- `hotfix/critical-security-patch`
+- `hotfix/payment-gateway-down`
+
+**Experimental/Research:**
+- `experiment/new-ui-framework`
+- `research/performance-optimization`
+
+**Branch Naming Best Practices:**
+1. Use lowercase and hyphens (kebab-case)
+2. Keep descriptions short but descriptive
+3. Use present tense ("add" not "added")
+4. Be specific enough to understand the purpose
+5. Include ticket numbers if using issue tracking:
+   - `feature/AUTH-123-user-login`
+   - `fix/BUG-456-payment-error`
+
 ## Workflow
 - Pull latest changes before starting work
 - Commit frequently with logical chunks
