@@ -2,7 +2,7 @@
 
 ## Overview
 
-This implementation plan converts the PDF OCR processor design into discrete coding tasks. The system has four main components: PDF combination (PowerShell), local OCR processing (Python/Kraken), AWS OCR processing (Python/Textract), and review document generation (Python/Word). Tasks focus on improving existing code, adding comprehensive testing, and ensuring robust error handling.
+This implementation plan converts the PDF OCR processor design into discrete coding tasks. The system has four main components for PDF processing: PDF combination (PowerShell), local OCR processing (Python/Kraken), AWS OCR processing (Python/Textract), and review document generation (Python/Word). Additionally, the system supports direct image folder processing with Tesseract (local) and AWS Textract (cloud) for OCR, generating similar side-by-side review documents. Tasks focus on improving existing code, adding comprehensive testing, and ensuring robust error handling.
 
 ## Tasks
 
@@ -227,6 +227,107 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Create cost anomaly detection for unexpected usage
   - Set up SNS notifications for critical alerts
   - _Requirements: Proactive monitoring and incident response_
+
+- [ ] 13. Create Image Folder Processor Base Class
+  - Implement image file discovery with natural sorting (IMG_001.jpg, IMG_002.jpg, etc.)
+  - Add image format validation (JPEG, PNG, BMP, TIFF support)
+  - Create resolution and quality validation before OCR processing
+  - Implement base ImageProcessor interface similar to PDF processors
+  - Add progress tracking for batch image processing
+  - _Requirements: 9.1, 9.2, 9.3, 9.7, 9.9_
+
+- [ ]* 13.1 Write property test for image discovery and sorting
+  - **Property 11: Image Discovery Maintains Order and Completeness**
+  - **Validates: Requirements 9.1**
+
+- [ ]* 13.2 Write unit tests for image validation
+  - Test format validation for supported/unsupported formats
+  - Test resolution and quality checks
+  - Test error handling for corrupted images
+  - _Requirements: 9.2, 9.3, 9.8_
+
+- [ ] 14. Implement Tesseract Local Image Processor
+  - Create TesseractImageProcessor class (parallel to KrakenProcessorPythonOnly)
+  - Support configurable language models (eng, fra, deu, etc.)
+  - Implement batch image processing with memory management
+  - Generate text output files per image with confidence scores
+  - Add preprocessing options (deskew, denoise, contrast enhancement)
+  - Create processing summary with success rates and statistics
+  - _Requirements: 9.4, 9.7, 9.8, 9.9, 9.10_
+
+- [ ]* 14.1 Write property test for Tesseract processing completeness
+  - **Property 12: Image OCR Processing Produces Complete Results**
+  - **Validates: Requirements 9.4, 9.7**
+
+- [ ]* 14.2 Write property test for Tesseract language model usage
+  - **Property 13: Tesseract Language Models Are Applied Correctly**
+  - **Validates: Requirements 9.4**
+
+- [ ]* 14.3 Write unit tests for Tesseract error handling
+  - Test missing dependencies and installation validation
+  - Test invalid image inputs and processing failures
+  - Test partial processing and recovery scenarios
+  - _Requirements: 9.8, 5.1, 5.2_
+
+- [ ] 15. Implement AWS Textract Image Processor
+  - Create AWSTextractImageProcessor class (extends existing AWSTextractOCR)
+  - Process images directly without PDF conversion step
+  - Reuse confidence scoring and low-confidence word flagging logic
+  - Support batch processing with AWS API rate limiting
+  - Add retry logic for AWS service failures
+  - Generate per-image results with confidence scores
+  - _Requirements: 9.5, 9.7, 9.8, 9.10_
+
+- [ ]* 15.1 Write property test for AWS image processing completeness
+  - **Property 14: AWS Image OCR Processing Produces Complete Results**
+  - **Validates: Requirements 9.5, 9.7**
+
+- [ ]* 15.2 Write unit tests for AWS image processor
+  - Test direct image processing without PDF conversion
+  - Test AWS API error handling and retry logic
+  - Test confidence score analysis for images
+  - _Requirements: 9.5, 9.8, 3.5_
+
+- [ ] 16. Create Image Review Generators
+  - Create TesseractSideBySideGenerator for local processing results
+  - Create AWSTextractImageSideBySideGenerator for AWS processing results
+  - Generate Word documents with side-by-side image and text layout
+  - Maintain image quality and aspect ratios in output documents
+  - Highlight low-confidence words in review documents
+  - Include processing metadata and statistics in documents
+  - _Requirements: 9.6, 9.10, 4.1, 4.2, 4.3, 8.1, 8.2_
+
+- [ ]* 16.1 Write property test for image review document structure
+  - **Property 15: Image Review Documents Maintain Structure**
+  - **Validates: Requirements 9.6, 4.1, 4.2_
+
+- [ ]* 16.2 Write unit tests for image review generators
+  - Test document layout with various image sizes
+  - Test confidence score highlighting
+  - Test handling of missing or failed images
+  - _Requirements: 9.6, 4.3, 8.1, 8.2_
+
+- [ ] 17. Add Image Processing Integration Tests
+  - Create test image datasets with known expected results
+  - Test full pipeline: Image Folder → Tesseract → Review Document
+  - Test full pipeline: Image Folder → AWS Textract → Review Document
+  - Test mixed format image folders (JPEG + PNG)
+  - Test error recovery and partial processing scenarios
+  - _Requirements: 9.1-9.10 integration validation_
+
+- [ ]* 17.1 Write end-to-end tests for image workflows
+  - Test complete Tesseract workflow with sample images
+  - Test complete AWS Textract workflow with sample images
+  - Test comparison between Tesseract and AWS results
+  - _Requirements: Complete image workflow validation_
+
+- [ ] 18. Update documentation for image processing
+  - Add image processing section to README
+  - Document Tesseract installation and configuration
+  - Document supported image formats and requirements
+  - Add examples of processing image folders
+  - Document differences between PDF and image workflows
+  - _Requirements: Image processing user guidance_
 
 ## Notes
 

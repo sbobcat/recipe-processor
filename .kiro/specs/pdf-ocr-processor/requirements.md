@@ -2,18 +2,23 @@
 
 ## Introduction
 
-This system processes scanned PDF recipe documents through a multi-stage pipeline: combining individual PDF files, performing OCR (Optical Character Recognition) using either local or cloud-based tools, and generating human-reviewable documents that display original images alongside extracted text for validation and correction.
+This system processes scanned documents through a multi-stage pipeline: combining individual PDF files, performing OCR (Optical Character Recognition) using either local or cloud-based tools, and generating human-reviewable documents that display original images alongside extracted text for validation and correction. The system supports two input modes: PDF documents (which are combined and then processed) and image folders (which are processed directly).
 
 ## Glossary
 
 - **PDF_Combiner**: Component that merges multiple individual PDF files into a single document
-- **Local_OCR_Processor**: Component that uses Kraken OCR via WSL/Linux for handwritten text recognition
+- **Local_OCR_Processor**: Component that uses Kraken OCR via WSL/Linux for handwritten text recognition from PDFs
 - **AWS_OCR_Processor**: Component that uses AWS Textract for cloud-based OCR processing
 - **Review_Generator**: Component that creates side-by-side comparison documents
 - **Source_PDFs**: Individual scanned PDF files (SCN_0000.pdf, SCN_0001.pdf, etc.)
 - **Combined_PDF**: Single PDF file created by merging all Source_PDFs
 - **OCR_Results**: Text extracted from images by OCR processing
 - **Review_Document**: Word document containing original images and OCR text for human review
+- **Image_Folder_Processor**: Component that processes folders containing image files directly
+- **Tesseract_Processor**: Component that uses Tesseract OCR for local image text recognition
+- **AWS_Image_Processor**: Component that uses AWS Textract to process image files directly
+- **Source_Images**: Individual image files (JPEG, PNG) in a folder
+- **Image_Review_Generator**: Component that creates side-by-side comparison documents for image processing results
 
 ## Requirements
 
@@ -112,3 +117,20 @@ This system processes scanned PDF recipe documents through a multi-stage pipelin
 3. WHEN text extraction is incomplete, THE System SHALL clearly indicate missing or uncertain content
 4. WHEN multiple processing methods are used, THE System SHALL allow comparison between results
 5. THE System SHALL generate summary statistics about processing accuracy and completeness
+
+### Requirement 9: Image Folder Processing
+
+**User Story:** As a user, I want to process folders containing image files (JPEG, PNG) directly, so that I can extract text from scanned images without creating PDFs first.
+
+#### Acceptance Criteria
+
+1. WHEN a folder of images is provided, THE System SHALL discover and sort image files by filename
+2. WHEN validating images, THE System SHALL verify file formats (JPEG, PNG) and reject unsupported formats
+3. WHEN processing images, THE System SHALL validate image resolution and quality before OCR processing
+4. WHEN using local processing, THE System SHALL use Tesseract OCR with configurable language models
+5. WHEN using AWS processing, THE System SHALL use AWS Textract to process images directly
+6. WHEN generating output, THE System SHALL create Word documents with side-by-side image and text comparison
+7. WHEN processing multiple images, THE System SHALL provide progress indicators and handle errors gracefully
+8. WHEN images fail processing, THE System SHALL record errors and continue with remaining images
+9. THE System SHALL support batch processing of large image collections efficiently
+10. THE System SHALL generate processing summaries with success rates and confidence scores
