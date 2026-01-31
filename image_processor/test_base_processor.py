@@ -59,8 +59,8 @@ def main():
     print("=" * 60)
     
     try:
-        # Create processor
-        processor = TestImageProcessor(str(test_folder), str(output_folder))
+        # Create processor (disable auto-rotate for basic test)
+        processor = TestImageProcessor(str(test_folder), str(output_folder), auto_rotate=False)
         
         # Process images
         results = processor.process_image_folder()

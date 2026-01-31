@@ -60,7 +60,7 @@ class AWSTextractImageProcessor(ImageProcessor):
     # Confidence threshold for flagging low-confidence words
     LOW_CONFIDENCE_THRESHOLD = 80.0
     
-    def __init__(self, image_folder: str, output_dir: str, region: str = 'us-east-1', profile: str = None):
+    def __init__(self, image_folder: str, output_dir: str, region: str = 'us-east-1', profile: str = None, auto_rotate: bool = True):
         """
         Initialize AWS Textract image processor.
         
@@ -69,8 +69,9 @@ class AWSTextractImageProcessor(ImageProcessor):
             output_dir: Path to output directory for results
             region: AWS region for Textract service
             profile: AWS profile name (optional, uses default if not specified)
+            auto_rotate: Enable automatic rotation detection and correction (default: True)
         """
-        super().__init__(image_folder, output_dir)
+        super().__init__(image_folder, output_dir, auto_rotate=auto_rotate)
         
         self.region = region
         self.profile = profile
@@ -332,8 +333,11 @@ class AWSTextractImageProcessor(ImageProcessor):
         """
         logger.info(f"Processing image {image_num}: {image_path.name}")
         
-        # Load image bytes
-        image_bytes = self._load_image_bytes(image_path)
+        # Detect and correct rotation if enabled
+        corrected_path, rotation_metadata = self.detect_and_correct_rotation(image_path)
+        
+        # Load image bytes from corrected image
+        image_bytes = self._load_image_bytes(corrected_path)
         if not image_bytes:
             return {
                 'image_number': image_num,
@@ -389,6 +393,7 @@ class AWSTextractImageProcessor(ImageProcessor):
             'success': ocr_result.get('success', False),
             'confidence': ocr_result.get('confidence', 0),
             'word_count': len(ocr_result.get('words', [])),
+            'rotation': rotation_metadata,
             'error': ocr_result.get('error', '') if not ocr_result.get('success', False) else None
         }
     
@@ -509,6 +514,11 @@ def main():
         default=None,
         help='AWS profile name (uses default or AWS_PROFILE env var if not specified)'
     )
+    parser.add_argument(
+        '--no-auto-rotate',
+        action='store_true',
+        help='Disable automatic rotation detection and correction'
+    )
     
     args = parser.parse_args()
     
@@ -524,7 +534,8 @@ def main():
             args.image_folder,
             output_dir,
             region=args.region,
-            profile=args.profile
+            profile=args.profile,
+            auto_rotate=not args.no_auto_rotate
         )
         
         # Process images

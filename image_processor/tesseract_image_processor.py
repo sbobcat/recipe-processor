@@ -50,7 +50,18 @@ class TesseractImageProcessor(ImageProcessor):
     # Confidence threshold for flagging low-confidence words
     LOW_CONFIDENCE_THRESHOLD = 80.0
     
-    def __init__(self, image_folder: str, output_dir: str, lang: str = 'eng', config: str = ''):
+    def __init__(
+        self,
+        image_folder: str,
+        output_dir: str,
+        lang: str = 'eng',
+        config: str = '',
+        auto_rotate: bool = True,
+        preprocess: bool = False,
+        deskew: bool = False,
+        denoise: bool = False,
+        enhance_contrast: bool = False
+    ):
         """
         Initialize Tesseract image processor.
         
@@ -59,20 +70,200 @@ class TesseractImageProcessor(ImageProcessor):
             output_dir: Path to output directory for results
             lang: Tesseract language code (default: 'eng')
             config: Additional Tesseract configuration options
+            auto_rotate: Enable automatic rotation detection and correction (default: True)
+            preprocess: Enable all preprocessing options (default: False)
+            deskew: Enable deskewing (straighten tilted images) (default: False)
+            denoise: Enable denoising (remove noise/artifacts) (default: False)
+            enhance_contrast: Enable contrast enhancement (default: False)
         """
-        super().__init__(image_folder, output_dir)
+        super().__init__(image_folder, output_dir, auto_rotate=auto_rotate)
         
         self.lang = lang
         self.config = config
+        
+        # Preprocessing options
+        self.preprocess = preprocess
+        self.deskew = deskew or preprocess
+        self.denoise = denoise or preprocess
+        self.enhance_contrast = enhance_contrast or preprocess
+        
+        # Create preprocessed images directory if preprocessing is enabled
+        if self.deskew or self.denoise or self.enhance_contrast:
+            self.preprocessed_dir = self.output_dir / 'preprocessed_images'
+            self.preprocessed_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            self.preprocessed_dir = None
         
         # Verify Tesseract installation
         try:
             version = pytesseract.get_tesseract_version()
             logger.info(f"Tesseract version: {version}")
+            logger.info(f"Language: {self.lang}")
+            if self.deskew or self.denoise or self.enhance_contrast:
+                logger.info(
+                    f"Preprocessing enabled: "
+                    f"deskew={self.deskew}, denoise={self.denoise}, "
+                    f"enhance_contrast={self.enhance_contrast}"
+                )
         except Exception as e:
             logger.error(f"Tesseract setup error: {e}")
             logger.error("Make sure Tesseract OCR is installed and in your PATH")
             raise
+    
+    def _preprocess_image(self, image_path: Path) -> Path:
+        """
+        Apply preprocessing to image before OCR.
+        
+        Args:
+            image_path: Path to original image file
+            
+        Returns:
+            Path to preprocessed image (or original if no preprocessing)
+        """
+        # Skip if no preprocessing enabled
+        if not (self.deskew or self.denoise or self.enhance_contrast):
+            return image_path
+        
+        try:
+            # Open image
+            img = Image.open(image_path)
+            
+            # Convert to RGB if necessary
+            if img.mode not in ('RGB', 'L'):
+                img = img.convert('RGB')
+            
+            # Apply deskewing
+            if self.deskew:
+                img = self._deskew_image(img)
+            
+            # Apply denoising
+            if self.denoise:
+                img = self._denoise_image(img)
+            
+            # Apply contrast enhancement
+            if self.enhance_contrast:
+                img = self._enhance_contrast(img)
+            
+            # Save preprocessed image
+            preprocessed_path = self.preprocessed_dir / f"preprocessed_{image_path.name}"
+            img.save(preprocessed_path)
+            
+            logger.debug(f"Preprocessed image saved: {preprocessed_path.name}")
+            return preprocessed_path
+            
+        except Exception as e:
+            logger.warning(f"Preprocessing failed for {image_path.name}: {e}")
+            logger.warning("Using original image")
+            return image_path
+    
+    def _deskew_image(self, img: Image.Image) -> Image.Image:
+        """
+        Deskew (straighten) a tilted image.
+        
+        Args:
+            img: PIL Image object
+            
+        Returns:
+            Deskewed PIL Image object
+        """
+        try:
+            import numpy as np
+            from scipy import ndimage
+            
+            # Convert to grayscale
+            if img.mode != 'L':
+                gray = img.convert('L')
+            else:
+                gray = img
+            
+            # Convert to numpy array
+            img_array = np.array(gray)
+            
+            # Calculate skew angle using projection profile method
+            # This is a simplified deskewing - for production, consider using
+            # more sophisticated methods like Hough transform
+            
+            # Threshold the image
+            threshold = np.mean(img_array)
+            binary = img_array < threshold
+            
+            # Calculate angle
+            angles = np.linspace(-5, 5, 50)  # Check angles from -5 to +5 degrees
+            scores = []
+            
+            for angle in angles:
+                rotated = ndimage.rotate(binary, angle, reshape=False, order=0)
+                hist = np.sum(rotated, axis=1)
+                score = np.sum((hist[1:] - hist[:-1]) ** 2)
+                scores.append(score)
+            
+            # Find angle with maximum score (most horizontal lines)
+            best_angle = angles[np.argmax(scores)]
+            
+            # Only rotate if angle is significant (> 0.5 degrees)
+            if abs(best_angle) > 0.5:
+                logger.debug(f"Deskewing by {best_angle:.2f} degrees")
+                img = img.rotate(best_angle, expand=True, fillcolor='white')
+            
+            return img
+            
+        except ImportError:
+            logger.warning("scipy not available for deskewing. Install with: pip install scipy")
+            return img
+        except Exception as e:
+            logger.warning(f"Deskewing failed: {e}")
+            return img
+    
+    def _denoise_image(self, img: Image.Image) -> Image.Image:
+        """
+        Remove noise from image.
+        
+        Args:
+            img: PIL Image object
+            
+        Returns:
+            Denoised PIL Image object
+        """
+        try:
+            from PIL import ImageFilter
+            
+            # Apply median filter to remove salt-and-pepper noise
+            img = img.filter(ImageFilter.MedianFilter(size=3))
+            
+            logger.debug("Applied denoising filter")
+            return img
+            
+        except Exception as e:
+            logger.warning(f"Denoising failed: {e}")
+            return img
+    
+    def _enhance_contrast(self, img: Image.Image) -> Image.Image:
+        """
+        Enhance image contrast for better OCR.
+        
+        Args:
+            img: PIL Image object
+            
+        Returns:
+            Contrast-enhanced PIL Image object
+        """
+        try:
+            from PIL import ImageEnhance
+            
+            # Enhance contrast
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(1.5)  # Increase contrast by 50%
+            
+            # Enhance sharpness
+            enhancer = ImageEnhance.Sharpness(img)
+            img = enhancer.enhance(1.3)  # Increase sharpness by 30%
+            
+            logger.debug("Applied contrast enhancement")
+            return img
+            
+        except Exception as e:
+            logger.warning(f"Contrast enhancement failed: {e}")
+            return img
     
     def _extract_text_with_confidence(self, image_path: Path) -> Dict[str, Any]:
         """
@@ -207,14 +398,20 @@ class TesseractImageProcessor(ImageProcessor):
         """
         logger.info(f"Processing image {image_num}: {image_path.name}")
         
-        # Extract text with Tesseract
-        ocr_result = self._extract_text_with_confidence(image_path)
-        
-        # Save results to text file
-        text_filename = f"image_{image_num:03d}_ocr.txt"
-        text_file_path = output_dir / text_filename
-        
         try:
+            # Detect and correct rotation if enabled
+            corrected_path, rotation_metadata = self.detect_and_correct_rotation(image_path)
+            
+            # Apply preprocessing if enabled
+            processed_path = self._preprocess_image(corrected_path)
+            
+            # Extract text with Tesseract using processed image
+            ocr_result = self._extract_text_with_confidence(processed_path)
+            
+            # Save results to text file
+            text_filename = f"image_{image_num:03d}_ocr.txt"
+            text_file_path = output_dir / text_filename
+            
             with open(text_file_path, 'w', encoding='utf-8') as f:
                 f.write(f"Image {image_num} - {image_path.name}\n")
                 f.write(f"Confidence: {ocr_result.get('confidence', 0):.1f}%\n")
@@ -238,25 +435,38 @@ class TesseractImageProcessor(ImageProcessor):
                 
                 if 'error' in ocr_result:
                     f.write(f"\n\nERROR: {ocr_result['error']}\n")
-        
+            
+            # Return result
+            return {
+                'image_number': image_num,
+                'image_file': str(image_path),
+                'text_file': str(text_file_path),
+                'text': ocr_result.get('text', ''),
+                'success': ocr_result.get('success', False),
+                'confidence': ocr_result.get('confidence', 0),
+                'word_count': len(ocr_result.get('words', [])),
+                'rotation': rotation_metadata,
+                'preprocessing_applied': (self.deskew or self.denoise or self.enhance_contrast),
+                'error': ocr_result.get('error', '') if not ocr_result.get('success', False) else None
+            }
+            
         except Exception as e:
-            logger.error(f"Failed to save text file for image {image_num}: {e}")
-        
-        # Return result
-        return {
-            'image_number': image_num,
-            'image_file': str(image_path),
-            'text_file': str(text_file_path),
-            'text': ocr_result.get('text', ''),
-            'success': ocr_result.get('success', False),
-            'confidence': ocr_result.get('confidence', 0),
-            'word_count': len(ocr_result.get('words', [])),
-            'error': ocr_result.get('error', '') if not ocr_result.get('success', False) else None
-        }
+            logger.error(f"Failed to process image {image_num}: {e}")
+            return {
+                'image_number': image_num,
+                'image_file': str(image_path),
+                'text_file': '',
+                'text': '',
+                'success': False,
+                'confidence': 0,
+                'word_count': 0,
+                'error': str(e)
+            }
     
     def process_image_folder(self) -> Dict[str, Any]:
         """
         Process all images in the folder with Tesseract OCR.
+        Implements memory-efficient batch processing.
         
         Returns:
             Dictionary with overall processing results
@@ -298,11 +508,14 @@ class TesseractImageProcessor(ImageProcessor):
                 'validation_errors': validation_errors
             }
         
-        # Process each image
+        # Process each image with memory management
         results = []
+        start_time = time.time()
+        
         for i, image_path in enumerate(valid_images, start=1):
             self.update_progress(i, len(valid_images), "processing")
             
+            # Process single image
             result = self.process_single_image(image_path, self.output_dir, i)
             results.append(result)
             
@@ -314,9 +527,44 @@ class TesseractImageProcessor(ImageProcessor):
             else:
                 logger.error(f"  ✗ Failed - {result.get('error', 'Unknown error')}")
                 self.failed_images += 1
+            
+            # Memory management: Force garbage collection every 10 images
+            if i % 10 == 0:
+                import gc
+                gc.collect()
         
-        # Create summary
+        # Calculate processing time
+        processing_time = time.time() - start_time
+        
+        # Create summary with enhanced statistics
         summary = self.create_processing_summary(results)
+        
+        # Add additional statistics
+        summary['processing_time_seconds'] = processing_time
+        summary['average_time_per_image'] = processing_time / len(valid_images) if valid_images else 0
+        summary['language'] = self.lang
+        summary['preprocessing_enabled'] = (self.deskew or self.denoise or self.enhance_contrast)
+        summary['preprocessing_options'] = {
+            'deskew': self.deskew,
+            'denoise': self.denoise,
+            'enhance_contrast': self.enhance_contrast
+        }
+        
+        # Calculate confidence statistics
+        successful_results = [r for r in results if r['success']]
+        if successful_results:
+            confidences = [r['confidence'] for r in successful_results]
+            summary['confidence_stats'] = {
+                'average': sum(confidences) / len(confidences),
+                'min': min(confidences),
+                'max': max(confidences),
+                'median': sorted(confidences)[len(confidences) // 2]
+            }
+            
+            # Count low confidence results
+            low_conf_count = sum(1 for c in confidences if c < self.LOW_CONFIDENCE_THRESHOLD)
+            summary['low_confidence_images'] = low_conf_count
+            summary['low_confidence_percentage'] = (low_conf_count / len(confidences) * 100)
         
         # Add validation errors to summary
         if validation_errors:
@@ -327,6 +575,7 @@ class TesseractImageProcessor(ImageProcessor):
         with open(summary_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
+        # Print comprehensive summary
         logger.info(f"\n{'=' * 50}")
         logger.info("Tesseract Processing Complete")
         logger.info(f"{'=' * 50}")
@@ -334,12 +583,17 @@ class TesseractImageProcessor(ImageProcessor):
         logger.info(f"Successful: {summary['successful_images']}")
         logger.info(f"Failed: {summary['failed_images']}")
         logger.info(f"Success rate: {summary['success_rate']:.1f}%")
+        logger.info(f"Processing time: {processing_time:.1f}s")
+        logger.info(f"Average time per image: {summary['average_time_per_image']:.2f}s")
         
         if summary['successful_images'] > 0:
-            avg_confidence = sum(
-                r['confidence'] for r in results if r['success']
-            ) / summary['successful_images']
-            logger.info(f"Average confidence: {avg_confidence:.1f}%")
+            logger.info(f"Average confidence: {summary['confidence_stats']['average']:.1f}%")
+            logger.info(f"Confidence range: {summary['confidence_stats']['min']:.1f}% - {summary['confidence_stats']['max']:.1f}%")
+            if summary.get('low_confidence_images', 0) > 0:
+                logger.info(
+                    f"Low confidence images: {summary['low_confidence_images']} "
+                    f"({summary['low_confidence_percentage']:.1f}%)"
+                )
         
         logger.info(f"Summary saved to: {summary_file}")
         
@@ -365,12 +619,37 @@ def main():
     parser.add_argument(
         '-l', '--lang',
         default='eng',
-        help='Tesseract language code (default: eng)'
+        help='Tesseract language code (default: eng). Examples: eng, fra, deu, spa'
     )
     parser.add_argument(
         '-c', '--config',
         default='',
         help='Additional Tesseract configuration options'
+    )
+    parser.add_argument(
+        '--no-auto-rotate',
+        action='store_true',
+        help='Disable automatic rotation detection and correction'
+    )
+    parser.add_argument(
+        '--preprocess',
+        action='store_true',
+        help='Enable all preprocessing options (deskew, denoise, enhance contrast)'
+    )
+    parser.add_argument(
+        '--deskew',
+        action='store_true',
+        help='Enable deskewing (straighten tilted images)'
+    )
+    parser.add_argument(
+        '--denoise',
+        action='store_true',
+        help='Enable denoising (remove noise and artifacts)'
+    )
+    parser.add_argument(
+        '--enhance-contrast',
+        action='store_true',
+        help='Enable contrast enhancement for better OCR'
     )
     
     args = parser.parse_args()
@@ -387,7 +666,12 @@ def main():
             args.image_folder,
             output_dir,
             lang=args.lang,
-            config=args.config
+            config=args.config,
+            auto_rotate=not args.no_auto_rotate,
+            preprocess=args.preprocess,
+            deskew=args.deskew,
+            denoise=args.denoise,
+            enhance_contrast=args.enhance_contrast
         )
         
         # Process images
@@ -400,12 +684,18 @@ def main():
         print(f"📁 Output directory: {output_dir}")
         print(f"📊 Processed: {results['successful_images']}/{results['total_images']} images")
         print(f"📈 Success rate: {results['success_rate']:.1f}%")
+        print(f"⏱️  Processing time: {results.get('processing_time_seconds', 0):.1f}s")
         
         if results['successful_images'] > 0:
-            avg_confidence = sum(
-                r['confidence'] for r in results['images'] if r['success']
-            ) / results['successful_images']
-            print(f"🎯 Average confidence: {avg_confidence:.1f}%")
+            conf_stats = results.get('confidence_stats', {})
+            print(f"🎯 Average confidence: {conf_stats.get('average', 0):.1f}%")
+            print(f"📉 Confidence range: {conf_stats.get('min', 0):.1f}% - {conf_stats.get('max', 0):.1f}%")
+            
+            if results.get('low_confidence_images', 0) > 0:
+                print(
+                    f"⚠️  Low confidence images: {results['low_confidence_images']} "
+                    f"({results.get('low_confidence_percentage', 0):.1f}%)"
+                )
         
         print("\n💡 Next steps:")
         print("1. Review the OCR text files in the output directory")
@@ -417,6 +707,8 @@ def main():
         sys.exit(1)
     except Exception as e:
         logger.error(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

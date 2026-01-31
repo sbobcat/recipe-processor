@@ -16,6 +16,11 @@ except ImportError:
     print("Missing Pillow. Install with: pip install Pillow")
     raise
 
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None  # Optional dependency for rotation detection
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
@@ -41,16 +46,33 @@ class ImageProcessor(ABC):
     # Recommended DPI for OCR
     RECOMMENDED_DPI = 300
     
-    def __init__(self, image_folder: str, output_dir: str):
+    # Rotation angles
+    ROTATION_ANGLES = {
+        0: 0,      # Correct orientation
+        90: 270,   # Rotated 90° clockwise -> rotate 270° to correct
+        180: 180,  # Upside down -> rotate 180° to correct
+        270: 90    # Rotated 270° clockwise -> rotate 90° to correct
+    }
+    
+    def __init__(self, image_folder: str, output_dir: str, auto_rotate: bool = True):
         """
         Initialize image processor.
         
         Args:
             image_folder: Path to folder containing images
             output_dir: Path to output directory for results
+            auto_rotate: Enable automatic rotation detection and correction (default: True)
         """
         self.image_folder = Path(image_folder)
         self.output_dir = Path(output_dir)
+        self.auto_rotate = auto_rotate
+        
+        # Create rotated images directory if auto-rotation is enabled
+        if self.auto_rotate:
+            self.rotated_dir = self.output_dir / 'rotated_images'
+            self.rotated_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            self.rotated_dir = None
         
         # Validate inputs
         if not self.image_folder.exists():
@@ -237,6 +259,175 @@ class ImageProcessor(ABC):
         )
         
         return valid_images, validation_errors
+    
+    def detect_text_orientation(self, image_path: Path) -> Tuple[int, float]:
+        """
+        Detect text orientation in an image using Tesseract OSD.
+        
+        Args:
+            image_path: Path to image file
+            
+        Returns:
+            Tuple of (detected_angle, confidence)
+            detected_angle: 0, 90, 180, or 270 degrees
+            confidence: Detection confidence (0-100)
+        """
+        if pytesseract is None:
+            logger.warning(
+                "Tesseract not available for rotation detection. "
+                "Install with: pip install pytesseract"
+            )
+            return 0, 0.0
+        
+        try:
+            with Image.open(image_path) as img:
+                # Use Tesseract OSD (Orientation and Script Detection)
+                osd_data = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
+                
+                # Extract orientation information
+                detected_angle = osd_data.get('orientation', 0)
+                confidence = osd_data.get('orientation_conf', 0.0)
+                
+                logger.debug(
+                    f"Detected orientation for {image_path.name}: "
+                    f"{detected_angle}° (confidence: {confidence:.1f}%)"
+                )
+                
+                return detected_angle, confidence
+                
+        except pytesseract.TesseractError as e:
+            # OSD failed - likely no text detected or image quality too low
+            logger.warning(
+                f"Could not detect orientation for {image_path.name}: {e}"
+            )
+            return 0, 0.0
+        except Exception as e:
+            logger.error(
+                f"Error detecting orientation for {image_path.name}: {e}"
+            )
+            return 0, 0.0
+    
+    def rotate_image(
+        self,
+        image_path: Path,
+        angle: int,
+        output_path: Optional[Path] = None
+    ) -> Optional[Path]:
+        """
+        Rotate an image by the specified angle.
+        
+        Args:
+            image_path: Path to original image file
+            angle: Rotation angle (0, 90, 180, 270 degrees)
+            output_path: Path to save rotated image (optional)
+            
+        Returns:
+            Path to rotated image file, or None if rotation failed
+        """
+        if angle == 0:
+            # No rotation needed
+            return image_path
+        
+        try:
+            with Image.open(image_path) as img:
+                # Rotate image (PIL rotates counter-clockwise)
+                rotated_img = img.rotate(-angle, expand=True)
+                
+                # Determine output path
+                if output_path is None:
+                    if self.rotated_dir:
+                        output_path = self.rotated_dir / f"rotated_{image_path.name}"
+                    else:
+                        output_path = image_path.parent / f"rotated_{image_path.name}"
+                
+                # Save rotated image
+                rotated_img.save(output_path)
+                
+                logger.info(
+                    f"Rotated {image_path.name} by {angle}° -> {output_path.name}"
+                )
+                
+                return output_path
+                
+        except Exception as e:
+            logger.error(f"Failed to rotate image {image_path.name}: {e}")
+            return None
+    
+    def detect_and_correct_rotation(
+        self,
+        image_path: Path,
+        min_confidence: float = 1.5
+    ) -> Tuple[Path, Dict[str, Any]]:
+        """
+        Detect text orientation and automatically correct rotation if needed.
+        
+        Args:
+            image_path: Path to image file
+            min_confidence: Minimum confidence threshold for rotation (default: 1.5)
+            
+        Returns:
+            Tuple of (corrected_image_path, rotation_metadata)
+            corrected_image_path: Path to corrected image (original if no rotation needed)
+            rotation_metadata: Dict with rotation information
+        """
+        metadata = {
+            'original_path': str(image_path),
+            'detected_angle': 0,
+            'confidence': 0.0,
+            'correction_applied': False,
+            'corrected_path': str(image_path)
+        }
+        
+        # Skip if auto-rotation is disabled
+        if not self.auto_rotate:
+            return image_path, metadata
+        
+        # Detect orientation
+        detected_angle, confidence = self.detect_text_orientation(image_path)
+        
+        metadata['detected_angle'] = detected_angle
+        metadata['confidence'] = confidence
+        
+        # Check if rotation is needed
+        if detected_angle == 0:
+            # Image is correctly oriented
+            logger.debug(f"Image {image_path.name} is correctly oriented")
+            return image_path, metadata
+        
+        # Check confidence threshold
+        if confidence < min_confidence:
+            logger.warning(
+                f"Low confidence ({confidence:.1f}%) for rotation detection "
+                f"on {image_path.name}. Skipping rotation."
+            )
+            return image_path, metadata
+        
+        # Calculate correction angle
+        correction_angle = self.ROTATION_ANGLES.get(detected_angle, 0)
+        
+        if correction_angle == 0:
+            return image_path, metadata
+        
+        # Rotate image
+        corrected_path = self.rotate_image(image_path, correction_angle)
+        
+        if corrected_path:
+            metadata['correction_applied'] = True
+            metadata['correction_angle'] = correction_angle
+            metadata['corrected_path'] = str(corrected_path)
+            
+            logger.info(
+                f"Corrected orientation for {image_path.name}: "
+                f"detected {detected_angle}°, applied {correction_angle}° rotation"
+            )
+            
+            return corrected_path, metadata
+        else:
+            # Rotation failed, use original
+            logger.warning(
+                f"Failed to rotate {image_path.name}, using original"
+            )
+            return image_path, metadata
     
     def update_progress(self, page_num: int, total: int, status: str = "processing"):
         """

@@ -121,7 +121,7 @@ def test_natural_sorting():
     test_folder = Path(__file__).parent.parent / "assets"
     output_folder = Path(__file__).parent.parent / "test-data" / "image_processor_test"
     
-    processor = ComprehensiveTestProcessor(str(test_folder), str(output_folder))
+    processor = ComprehensiveTestProcessor(str(test_folder), str(output_folder), auto_rotate=False)
     
     # Test with mock filenames
     test_files = [
@@ -179,7 +179,7 @@ def main():
         test_folder = Path(__file__).parent.parent / "assets"
         output_folder = Path(__file__).parent.parent / "test-data" / "image_processor_test"
         
-        processor = ComprehensiveTestProcessor(str(test_folder), str(output_folder))
+        processor = ComprehensiveTestProcessor(str(test_folder), str(output_folder), auto_rotate=False)
         results = processor.process_image_folder()
         
         # Verify results

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This implementation plan converts the PDF OCR processor design into discrete coding tasks. The system has four main components for PDF processing: PDF combination (PowerShell), local OCR processing (Python/Kraken), AWS OCR processing (Python/Textract), and review document generation (Python/Word). Additionally, the system supports direct image folder processing with Tesseract (local) and AWS Textract (cloud) for OCR, generating similar side-by-side review documents. Tasks focus on improving existing code, adding comprehensive testing, and ensuring robust error handling.
+This implementation plan converts the PDF OCR processor design into discrete coding tasks. The system has four main components for PDF processing: PDF combination (PowerShell), local OCR processing (Python/Kraken), AWS OCR processing (Python/Textract), and review document generation (Python/Word). Additionally, the system supports direct image folder processing with Tesseract (local) and AWS Textract (cloud) for OCR, with automatic text orientation detection and rotation correction, generating similar side-by-side review documents. Tasks focus on improving existing code, adding comprehensive testing, and ensuring robust error handling.
 
 ## Tasks
 
@@ -232,9 +232,10 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Implement image file discovery with natural sorting (IMG_001.jpg, IMG_002.jpg, etc.)
   - Add image format validation (JPEG, PNG, BMP, TIFF support)
   - Create resolution and quality validation before OCR processing
+  - Add text orientation detection and automatic rotation correction
   - Implement base ImageProcessor interface similar to PDF processors
   - Add progress tracking for batch image processing
-  - _Requirements: 9.1, 9.2, 9.3, 9.7, 9.9_
+  - _Requirements: 9.1, 9.2, 9.3, 9.7, 9.9, 7.1_
 
 - [ ]* 13.1 Write property test for image discovery and sorting
   - **Property 11: Image Discovery Maintains Order and Completeness**
@@ -246,9 +247,10 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Test error handling for corrupted images
   - _Requirements: 9.2, 9.3, 9.8_
 
-- [ ] 14. Implement Tesseract Local Image Processor
+- [x] 14. Implement Tesseract Local Image Processor
   - Create TesseractImageProcessor class (parallel to KrakenProcessorPythonOnly)
   - Support configurable language models (eng, fra, deu, etc.)
+  - Utilize base class rotation detection before OCR processing
   - Implement batch image processing with memory management
   - Generate text output files per image with confidence scores
   - Add preprocessing options (deskew, denoise, contrast enhancement)
@@ -272,6 +274,7 @@ This implementation plan converts the PDF OCR processor design into discrete cod
 - [x] 15. Implement AWS Textract Image Processor
   - Create AWSTextractImageProcessor class (extends existing AWSTextractOCR)
   - Process images directly without PDF conversion step
+  - Utilize base class rotation detection before OCR processing
   - Reuse confidence scoring and low-confidence word flagging logic
   - Support batch processing with AWS API rate limiting
   - Add retry logic for AWS service failures
@@ -328,6 +331,26 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Add examples of processing image folders
   - Document differences between PDF and image workflows
   - _Requirements: Image processing user guidance_
+
+- [x] 19. Add automatic image rotation detection and correction
+  - Implement text orientation detection in base_image_processor.py
+  - Detect if text is vertical (90° or 270°), upside down (180°), or correct (0°)
+  - Automatically rotate images before OCR processing
+  - Add configuration option to enable/disable auto-rotation
+  - Preserve original images and save rotated versions separately
+  - Update processing metadata to track rotation corrections
+  - _Requirements: 9.2, 9.3, 9.7, 7.1 (image quality optimization)_
+
+- [ ]* 19.1 Write property test for rotation detection accuracy
+  - **Property 16: Rotation Detection Identifies Text Orientation Correctly**
+  - **Validates: Requirements 9.2, 9.3**
+
+- [ ]* 19.2 Write unit tests for rotation correction
+  - Test detection of 0°, 90°, 180°, 270° orientations
+  - Test rotation correction for each orientation
+  - Test handling of images with no detectable text
+  - Test configuration option to disable auto-rotation
+  - _Requirements: 9.2, 9.3, 6.1, 6.2_
 
 ## Notes
 

@@ -42,7 +42,8 @@ def test_initialization():
             processor = AWSTextractImageProcessor(
                 str(test_folder),
                 str(output_folder),
-                region='us-east-1'
+                region='us-east-1',
+                auto_rotate=False
             )
             
             print(f"✓ Processor initialized successfully")
@@ -84,7 +85,8 @@ def test_image_discovery():
         try:
             processor = AWSTextractImageProcessor(
                 str(test_folder),
-                str(output_folder)
+                str(output_folder),
+                auto_rotate=False
             )
             
             # Discover images
@@ -172,7 +174,8 @@ def test_mock_processing():
         try:
             processor = AWSTextractImageProcessor(
                 str(test_folder),
-                str(output_folder)
+                str(output_folder),
+                auto_rotate=False
             )
             
             # Get first image
@@ -238,7 +241,8 @@ def test_rate_limiting():
         try:
             processor = AWSTextractImageProcessor(
                 str(test_folder),
-                str(output_folder)
+                str(output_folder),
+                auto_rotate=False
             )
             
             import time
@@ -304,7 +308,8 @@ def test_error_handling():
         try:
             processor = AWSTextractImageProcessor(
                 str(test_folder),
-                str(output_folder)
+                str(output_folder),
+                auto_rotate=False
             )
             
             # Get first image
