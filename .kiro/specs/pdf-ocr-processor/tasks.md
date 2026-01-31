@@ -247,7 +247,7 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Test error handling for corrupted images
   - _Requirements: 9.2, 9.3, 9.8_
 
-- [ ] 14. Implement Tesseract Local Image Processor
+- [x] 14. Implement Tesseract Local Image Processor
   - Create TesseractImageProcessor class (parallel to KrakenProcessorPythonOnly)
   - Support configurable language models (eng, fra, deu, etc.)
   - Utilize base class rotation detection before OCR processing
@@ -332,7 +332,7 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Document differences between PDF and image workflows
   - _Requirements: Image processing user guidance_
 
-- [ ] 19. Add automatic image rotation detection and correction
+- [x] 19. Add automatic image rotation detection and correction
   - Implement text orientation detection in base_image_processor.py
   - Detect if text is vertical (90° or 270°), upside down (180°), or correct (0°)
   - Automatically rotate images before OCR processing
