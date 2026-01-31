@@ -352,6 +352,164 @@ This implementation plan converts the PDF OCR processor design into discrete cod
   - Test configuration option to disable auto-rotation
   - _Requirements: 9.2, 9.3, 6.1, 6.2_
 
+- [ ] 20. Project Reorganization - Directory Structure
+  - Create new directory structure (src/, tests/, docs/, examples/, config/, scripts/)
+  - Create __init__.py files for all Python packages
+  - Plan file migration strategy to minimize disruption
+  - Document new structure in ARCHITECTURE.md
+  - _Requirements: 10.1, 10.6, 10.9_
+
+- [ ] 20.1 Reorganize source code into src/ module
+  - Create src/processors/ for all OCR processors
+  - Create src/generators/ for all review document generators
+  - Create src/utils/ for shared utilities
+  - Create src/pdf_combiner/ for PDF combination logic
+  - Move and rename files according to new structure
+  - Update all import statements to reflect new package structure
+  - _Requirements: 10.1, 10.6, 10.9_
+
+- [ ] 20.2 Consolidate and reorganize tests
+  - Create tests/ directory with unit/ and integration/ subdirectories
+  - Move all test files from image_processor/ to tests/unit/
+  - Move test_aws_image_processor.py to tests/unit/
+  - Reorganize test_comprehensive.py and test_image_integration.py to tests/integration/
+  - Create tests/fixtures/ for test data and mock objects
+  - Create conftest.py with pytest configuration and shared fixtures
+  - Update all test imports to work with new structure
+  - _Requirements: 10.3_
+
+- [ ] 20.3 Consolidate documentation
+  - Create docs/ directory for all documentation
+  - Move README.md, SETUP_GUIDE.md, TROUBLESHOOTING.md, CHANGELOG.md, EXAMPLES.md to docs/
+  - Merge image_processor/README.md into docs/API_REFERENCE.md
+  - Merge image_processor/README_REVIEW_GENERATORS.md into docs/API_REFERENCE.md
+  - Merge image_processor/ROTATION_DETECTION.md into docs/API_REFERENCE.md (feature section)
+  - Merge image_processor/TESSERACT_FEATURES.md into docs/API_REFERENCE.md (feature section)
+  - Merge aws_processor/README_IMAGE_PROCESSOR.md into docs/API_REFERENCE.md
+  - Create docs/ARCHITECTURE.md with system design and component relationships
+  - Create new root README.md as quick start with badges and links to docs/
+  - Rename docs/EXAMPLES.md to docs/USER_GUIDE.md
+  - Remove duplicate documentation
+  - _Requirements: 10.2_
+
+- [ ] 20.4 Reorganize example scripts
+  - Create examples/ directory
+  - Move example_usage.py, example_tesseract_usage.py, example_tesseract_review_usage.py from image_processor/
+  - Move example_aws_review_usage.py from image_processor/
+  - Move example_aws_image_usage.py from aws_processor/
+  - Create examples/README.md with guide to all examples
+  - Rename examples to be more descriptive (basic_pdf_processing.py, basic_image_processing.py, etc.)
+  - Update examples to use configuration management
+  - Add comprehensive comments to each example
+  - _Requirements: 10.7_
+
+- [ ] 20.5 Implement configuration management system
+  - Create config/ directory
+  - Create config/default_config.yaml with all system settings
+  - Create config/aws_config.yaml for AWS-specific settings
+  - Create config/tesseract_config.yaml for Tesseract-specific settings
+  - Implement src/utils/config.py with Config class for loading YAML settings
+  - Add support for environment variable overrides
+  - Add configuration validation
+  - Document all configuration options in docs/API_REFERENCE.md
+  - _Requirements: 10.4, 6.1, 6.2, 6.3, 6.4_
+
+- [ ] 20.6 Remove hardcoded paths from all scripts
+  - Update all processors to use Config class instead of hardcoded paths
+  - Update all generators to use Config class
+  - Update PDF combiner to accept configuration
+  - Remove hardcoded paths from example scripts
+  - Add command-line argument support for config file path
+  - _Requirements: 10.4, 6.1, 6.2_
+
+- [ ] 20.7 Create entry point scripts with CLI
+  - Create scripts/ directory for utility scripts
+  - Create scripts/process_pdfs.py as main entry point for PDF workflow
+  - Create scripts/process_images.py as main entry point for image workflow
+  - Implement argparse for command-line argument parsing
+  - Add --help messages with usage examples
+  - Add --config option for custom configuration files
+  - Add --dry-run option for validation without processing
+  - Add --verbose option for detailed logging
+  - _Requirements: 10.5_
+
+- [ ] 20.8 Create utility and setup scripts
+  - Create scripts/setup_environment.py for environment validation
+  - Create scripts/validate_installation.py to check all dependencies
+  - Move tools/resize_images.py to scripts/resize_images.py
+  - Create scripts/cleanup_outputs.py for cleaning test outputs
+  - Add help text and documentation to all scripts
+  - _Requirements: 10.5, 5.2_
+
+- [ ] 20.9 Implement Python package structure
+  - Create setup.py for package installation
+  - Create pyproject.toml for modern Python packaging
+  - Create requirements.txt with production dependencies
+  - Create requirements-dev.txt with development dependencies (pytest, etc.)
+  - Add package metadata (name, version, author, description)
+  - Configure package to install entry point scripts
+  - Test installation with `pip install -e .`
+  - _Requirements: 10.8_
+
+- [ ] 20.10 Update all imports and references
+  - Update all import statements to use new package structure (src.processors.*, src.generators.*, etc.)
+  - Update all file path references to use new locations
+  - Update .gitignore for new structure
+  - Update all documentation links to point to new file locations
+  - Verify no broken imports or references remain
+  - _Requirements: 10.1, 10.9_
+
+- [ ] 20.11 Reorganize test data
+  - Create test-data/sample_pdfs/ and move SCN_*.pdf files
+  - Create test-data/sample_images/ for image test data
+  - Create test-data/expected_outputs/ for expected test results
+  - Update test fixtures to use new test data locations
+  - Keep test-data/Anns_Complete_Recipe_Book.pdf as example
+  - Document test data organization in tests/README.md
+  - _Requirements: 10.3_
+
+- [ ] 20.12 Create comprehensive test running documentation
+  - Create tests/README.md with testing guide
+  - Document how to run all tests: `pytest tests/`
+  - Document how to run unit tests only: `pytest tests/unit/`
+  - Document how to run integration tests: `pytest tests/integration/`
+  - Document test coverage reporting
+  - Add examples of running specific test files
+  - Document test fixtures and how to use them
+  - _Requirements: 10.3_
+
+- [ ] 20.13 Final validation and testing
+  - Run all unit tests in new structure
+  - Run all integration tests in new structure
+  - Verify all imports work correctly
+  - Test package installation with pip
+  - Test all entry point scripts work
+  - Test all examples run successfully
+  - Verify all documentation links are valid
+  - Run linting and code quality checks
+  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10_
+
+- [ ] 20.14 Create migration guide and update changelog
+  - Create docs/MIGRATION_GUIDE.md for existing users
+  - Document breaking changes in import paths
+  - Document new configuration system
+  - Document new entry point scripts
+  - Provide examples of migrating existing code
+  - Update CHANGELOG.md with reorganization details
+  - Update VERSION to 2.0.0 (major version for breaking changes)
+  - Create git tag for v2.0.0 release
+  - _Requirements: 10.2_
+
+- [ ] 20.15 Create architecture documentation
+  - Create docs/ARCHITECTURE.md with system design overview
+  - Document component relationships and data flow
+  - Create diagrams showing module interactions
+  - Document design decisions and rationale
+  - Explain processor and generator patterns
+  - Document extension points for new OCR engines
+  - Include examples of adding new processors
+  - _Requirements: 10.2, 10.6_
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for faster MVP
@@ -362,3 +520,8 @@ This implementation plan converts the PDF OCR processor design into discrete cod
 - The existing Kraken command structure should not be modified
 - AWS Textract integration should use existing boto3 patterns
 - PowerShell components should maintain Windows compatibility
+- Task 20.x series represents a major reorganization (v2.0.0) with breaking changes
+- Reorganization tasks should be completed in order to minimize disruption
+- Configuration management (20.5-20.6) is critical for removing hardcoded paths
+- All imports must be updated (20.10) after file moves to prevent breakage
+- Migration guide (20.14) is essential for existing users upgrading to v2.0.0
